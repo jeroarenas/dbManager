@@ -35,6 +35,8 @@ Table creation functions have not been incorporated in the class, since in our e
 You just need to create the object providing the necessary information for the database connection. For instance, imagine that database `db_Pu_ArXiv` is a database hosted in a remote MySQL server. Then, you can connect to the database and read publications stored in the `articles` table using the following code fragment:
 
 ```
+from base_dm_sql import BaseDMsql
+
 dbSERVER = 'servername'
 dbUSER = 'username'
 dbPASS = 'userpass'
