@@ -619,3 +619,5 @@ class BaseDMsql(object):
         else:
 
             print('Database dump only supported for MySQL databases')
+
+        return
