@@ -1,5 +1,5 @@
 # dbManager
-Python Class for managing mySQL or sqlite databases
+Python Class for managing `mySQL` or `sqlite` databases
 
 Implements class BaseDMsql that can be used to derive new classes
 for specific projects that may include table creation, data import,
