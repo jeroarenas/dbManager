@@ -253,7 +253,7 @@ class BaseDMsql(object):
             selectOptions:  string with fields that will be retrieved
                             (e.g. 'REFERENCIA, Resumen')
             filterOptions:  string with filtering options for the SQL query
-                            (e.g., 'WHERE UNESCO_cd=23')
+                            (e.g., 'UNESCO_cd=23')
             orderOptions:   string with field that will be used for sorting the
                             results of the query
                             (e.g, 'Cconv')
