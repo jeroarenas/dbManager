@@ -390,7 +390,7 @@ class BaseDMsql(object):
 
                 if chunksize:
 
-                    n_chunks = upper(len(arguments)/chunksize)
+                    n_chunks = np.ceil(len(arguments)/chunksize)
                     if verbose:
                         print('\n')
                         bar = Bar('Inserting chunks of data in database', max=n_chunks)
