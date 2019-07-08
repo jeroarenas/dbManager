@@ -40,7 +40,12 @@ import MySQLdb
 import sqlite3
 import numpy as np
 import copy
+from progress.bar import Bar
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 class BaseDMsql(object):
     """
@@ -350,7 +355,7 @@ class BaseDMsql(object):
 
         return cols, n_rows
 
-    def insertInTable(self, tablename, columns, arguments):
+    def insertInTable(self, tablename, columns, arguments, chunksize=None, verbose=False):
         """
         Insert new records into table
 
@@ -376,31 +381,33 @@ class BaseDMsql(object):
                 # Make sure we have a list of tuples; necessary for mysql
                 arguments = list(map(tuple, arguments))
 
-                # # Update DB entries one by one.
-                # for arg in arguments:
-                #     # sd
-                #     sqlcmd = ('INSERT INTO ' + tablename + '(' +
-                #               ','.join(columns) + ') VALUES(' +
-                #               ','.join('{}'.format(a) for a in arg) + ')'
-                #               )
-
-                #     try:
-                #         self._c.execute(sqlcmd)
-                #     except:
-                #         import ipdb
-                #         ipdb.set_trace()
-
                 sqlcmd = ('INSERT INTO ' + tablename +
-                          '(' + ','.join(columns) + ') VALUES (')
+                              '(' + ','.join(columns) + ') VALUES (')
                 if self.connector == 'mysql':
                     sqlcmd += '%s' + (ncol-1)*',%s' + ')'
-                else:
+                else:    
                     sqlcmd += '?' + (ncol-1)*',?' + ')'
 
-                self._c.executemany(sqlcmd, arguments)
+                if chunksize:
 
-                # Commit changes
-                self._conn.commit()
+                    n_chunks = upper(len(arguments)/chunksize)
+                    if verbose:
+                        print('\n')
+                        bar = Bar('Inserting chunks of data in database', max=n_chunks)
+                    for chk in chunks(arguments, chunksize):
+                        if verbose:
+                            bar.next()
+                        self._c.executemany(sqlcmd, chk)
+                        self._conn.commit()
+
+                    if verbose:
+                        bar.finish()
+
+                else:
+
+                    self._c.executemany(sqlcmd, arguments)
+                    # Commit changes
+                    self._conn.commit()
         else:
             print('Error inserting data in table: number of columns mismatch')
 
