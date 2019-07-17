@@ -454,11 +454,11 @@ class BaseDMsql(object):
                 # Make sure we have a list of tuples; necessary for mysql
                 arguments = list(map(tuple, arguments))
 
-                sqlcmd = ('DELETE FROM ' + tablename + ' WHERE '
+                sqlcmd = 'DELETE FROM ' + tablename + ' WHERE '
                 if self.connector == 'mysql':
-                    sqlcmd += ' AND '.join([el + '=%s' for el in columns]))
+                    sqlcmd += ' AND '.join([el + '=%s' for el in columns])
                 else:    
-                    sqlcmd += ' AND '.join([el + '=?' for el in columns]))
+                    sqlcmd += ' AND '.join([el + '=?' for el in columns])
 
                 if chunksize:
 
