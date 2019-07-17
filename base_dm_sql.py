@@ -25,6 +25,7 @@ The base clase provided in this file implements the following methods:
 * getColumnNames  : Gets the names of the columns in a particular table
 * getTableInfo    : Gets the number of rows and the names of columns in table
 * insertInTable   : Insert new records in Table. Input data comes as a list of tuples.
+* deleteFromTable : Delete records from Table. Conditions are given on columname and values
 * setField        : Updates table records. Input data comes as a list of tuples.
 * upsert          : Update or insert records in a table. Input data comes as panda df
                     If the record exists (according to primary key) data will be updated
@@ -364,6 +365,10 @@ class BaseDMsql(object):
             columns:    Name of columns for which data are provided
             arguments:  A list of lists or tuples, each element associated
                         to one new entry for the table
+            chunksize: If chunksize is not None, Data will be inserted in chunks
+                       of the specified size
+            verbose: True or False. If chunksize is active and verbose is True, 
+                     the progress of the chunks insertion is displayed on screen
         """
 
         # Make sure columns is a list, and not a single string
@@ -408,8 +413,79 @@ class BaseDMsql(object):
                     self._c.executemany(sqlcmd, arguments)
                     # Commit changes
                     self._conn.commit()
+            else:
+                print('Error inserting data in table: The table does not exist')
         else:
             print('Error inserting data in table: number of columns mismatch')
+
+        return
+
+    def deleteFromTable(self, tablename, columns, arguments):
+        """
+        Delete rows from table
+
+        Args:
+            tablename:  Name of table from which data will be removed
+            columns:    Name of columns for which data are provided
+            arguments:  A list of lists or tuples, conditions for data to be removed
+            chunksize: If chunksize is not None, Data will be deleted in chunks
+                       of the specified size
+            verbose: True or False. If chunksize is active and verbose is True, 
+                     the progress of the chunks deletion is displayed on screen
+
+        E.g., if columns is ['userID','productID'] and arguments is
+        [['234', '227'],['234', '228']] this function will delete from the
+        table all rows where userID='234' AND productID='227', and all rows
+        where userID='234' and productID='228'
+        """
+
+        # Make sure columns is a list, and not a single string
+        if not isinstance(columns, (list,)):
+            columns = [columns]
+
+        # To allow for column names that have spaces
+        columns = list(map(lambda x: '`'+x+'`', columns))
+
+        ncol = len(columns)
+
+        if len(arguments[0]) == ncol:
+            # Make sure the tablename is valid
+            if tablename in self.getTableNames():
+                # Make sure we have a list of tuples; necessary for mysql
+                arguments = list(map(tuple, arguments))
+
+                sqlcmd = ('DELETE FROM ' + tablename + ' WHERE '
+                if self.connector == 'mysql':
+                    sqlcmd += ' AND '.join([el + '=%s' for el in columns]))
+                else:    
+                    sqlcmd += ' AND '.join([el + '=?' for el in columns]))
+
+                if chunksize:
+
+                    n_chunks = np.ceil(len(arguments)/chunksize)
+                    if verbose:
+                        print('\n')
+                        bar = Bar('Deleting data from database', max=n_chunks)
+                    for chk in chunks(arguments, chunksize):
+                        if verbose:
+                            bar.next()
+                        self._c.executemany(sqlcmd, chk)
+                        self._conn.commit()
+
+                    if verbose:
+                        bar.finish()
+
+                else:
+
+                    self._c.executemany(sqlcmd, arguments)
+                        # Commit changes
+                    self._conn.commit()
+
+            else:
+                print('Error deleting data from table: The table does not exist')
+        
+        else:
+            print('Error deleting data from table table: number of columns mismatch')
 
         return
 
