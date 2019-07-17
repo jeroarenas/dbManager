@@ -420,7 +420,7 @@ class BaseDMsql(object):
 
         return
 
-    def deleteFromTable(self, tablename, columns, arguments):
+    def deleteFromTable(self, tablename, columns, arguments, chunksize=None, verbose=False):
         """
         Delete rows from table
 
