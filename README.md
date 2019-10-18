@@ -21,6 +21,7 @@ The base clase (BaseDMsql) provided in this file implements the following method
    * `getColumnNames`  : Gets the names of the columns in a particular table
    * `getTableInfo`    : Gets the number of rows and the names of columns in table
    * `insertInTable`   : Insert new records in Table. Input data comes as a list of tuples.
+   * `deleteFromTable` : Delete rows from table satisfying specified conditions.
    * `setField`        : Updates table records. Input data comes as a list of tuples.
    * `upsert`          : Update or insert records in a table. Input data comes as panda df
                          If the record exists (according to primary key) data will be updated
