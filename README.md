@@ -1,5 +1,5 @@
 # dbManager
-Python Class for managing `mySQL` or `sqlite` databases
+Python Class for managing `mySQL` or `sqlite` databases.
 
 Implements class BaseDMsql that can be used to derive new classes
 for specific projects that may include table creation, data import,
@@ -30,6 +30,8 @@ The base clase (BaseDMsql) provided in this file implements the following method
    * `DBdump`          : Creates dump of full database, or dump of selected tables
    
 Table creation functions have not been incorporated in the class, since in our experience this task is different for each project. This repository can therefore be incorporated as a submodule of another project, and then create a new database_manager for the project that extends class BaseDMsql and adds methods for table creation and data import
+
+The class has been extensively used and tested with MySQL connections. Further SQLite testing may be necessary. 
 
 # MySQL use example
 
