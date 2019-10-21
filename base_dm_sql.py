@@ -80,6 +80,7 @@ class BaseDMsql(object):
         self.user = db_user
         self.password = db_password
         self.port = db_port
+        self.unix_socket = unix_socket
 
         # Other class variables
         self.dbON = False    # Will switch to True when the db is connected.
