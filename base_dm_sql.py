@@ -1,5 +1,5 @@
 """
-This class provides functionality for managing a generig sqlite
+This class provides functionality for managing a generic sqlite
 or mysql database:
 
 Created on May 11 2018
@@ -55,7 +55,7 @@ class BaseDMsql(object):
 
     def __init__(self, db_name, db_connector, path2db=None,
                  db_server=None, db_user=None, db_password=None,
-                 db_port=None):
+                 db_port=None, unix_socket=None, charset='utf8mb4'):
         """
         Initializes a DataManager object
 
@@ -66,7 +66,10 @@ class BaseDMsql(object):
             db_server    :Server (mysql only)
             db_user      :User (mysql only)
             db_password  :Password (mysql only)
-            db_port      :port(mysql only) Necessary if not 3306
+            db_port      :port(mysql via TCP only) Necessary if not 3306
+            unix_socket  :socket for local connectivity. If avaiable, connection
+                          is faster than through TCP. 
+            charset      :Codificación a utilizar por defecto en la conexión
         """
 
         # Store paths to the main project folders and files
@@ -89,16 +92,23 @@ class BaseDMsql(object):
         try:
             if self.connector == 'mysql':
                 if self.port:
-                    self._conn = MySQLdb.connect(self.server, self.user,
-                                             self.password, self.dbname,
-                                             port=self.port)
+                    self._conn = MySQLdb.connect(host=self.server,
+                                    user=self.user, passwd=self.password,
+                                    db=self.dbname, port=self.port,
+                                    charset=charset)
+                elif self.unix_socket:
+                    self._conn = MySQLdb.connect(host=self.server,
+                                    user=self.user, passwd=self.password,
+                                    db=self.dbname,
+                                    unix_socket=unix_socket, charset=charset)
                 else:
-                    self._conn = MySQLdb.connect(self.server, self.user,
-                                             self.password, self.dbname)                    
+                    self._conn = MySQLdb.connect(host=self.server,
+                                    user=self.user, passwd=self.password,
+                                    db=self.dbname, charset=charset)
                 self._c = self._conn.cursor()
                 print("MySQL database connection successful")
                 self.dbON = True
-                self._conn.set_character_set('utf8')
+                #self._conn.set_character_set('utf8')
             elif self.connector == 'sqlite3':
                 # sqlite3
                 # sqlite file will be in the root of the project, we read the
@@ -114,6 +124,9 @@ class BaseDMsql(object):
         except:
             print("---- Error connecting to the database")
 
+        return
+
+
     def __del__(self):
         """
         When destroying the object, it is necessary to commit changes
@@ -126,6 +139,8 @@ class BaseDMsql(object):
         except:
             print("---- Error closing database")
 
+        return
+
     def deleteDBtables(self, tables=None):
         """
         Delete tables from database
@@ -137,14 +152,13 @@ class BaseDMsql(object):
                     (inlcuding those that might not exist previously)
         """
 
-        # If tables is None, all tables are deleted an re-generated
+        # If tables is None, all tables are deleted and re-generated
         if tables is None:
             # Delete all existing tables
             for table in self.getTableNames():
                 self._c.execute("DROP TABLE " + table)
 
         else:
-
             # It tables is not a list, make the appropriate list
             if type(tables) is str:
                 tables = [tables]
@@ -167,7 +181,7 @@ class BaseDMsql(object):
             columntype : Type of new column.
 
         Note that, for mysql, if type is TXT or VARCHAR, the character set if
-        forzed to be utf8.
+        forzed to be utf8mb4.
         """
 
         # Check if the table exists
@@ -184,10 +198,10 @@ class BaseDMsql(object):
                 if (self.connector == 'mysql' and
                     ('TEXT' in columntype or 'VARCHAR' in columntype) and
                     not ('CHARACTER SET' in columntype or
-                         'utf8' in columntype)):
+                         'utf8mb4' in columntype)):
 
-                    # We need to enforze utf8 for mysql
-                    fmt = ' CHARACTER SET utf8'
+                    # We enforze utf8mb4 for mysql
+                    fmt = ' CHARACTER SET utf8mb4'
 
                 sqlcmd = ('ALTER TABLE ' + tablename + ' ADD COLUMN ' +
                           columnname + ' ' + columntype + fmt)
@@ -204,6 +218,8 @@ class BaseDMsql(object):
             print('Error adding column to table. Please, select a valid ' +
                   'table name from the list')
             print(self.getTableNames())
+
+        return
 
     def dropTableColumn(self, tablename, columnname):
         """
