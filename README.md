@@ -17,6 +17,9 @@ The base clase (BaseDMsql) provided in this file implements the following method
    * `dropTableColumn` : Removes column from table (only MySQL)
    * `readDBtable`     : Reads rows from table and returns a pandas dataframe
                          with the retrieved data
+   * `readDBchunks`    : Provides an iterator to read chunks of rows in table
+                         Each iteration returns a chunk of predefined max number
+                         of rows to avoid stalling the mysql server
    * `getTableNames`   : Gets the names of the tables in the database
    * `getColumnNames`  : Gets the names of the columns in a particular table
    * `getTableInfo`    : Gets the number of rows and the names of columns in table
