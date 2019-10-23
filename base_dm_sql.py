@@ -252,7 +252,7 @@ class BaseDMsql(object):
                     self._conn.commit()
 
                 else:
-                    print('Error deleting column. Column drop not yet supported for SQLITE')
+                    print('Error deleting column. Column drop not supported for SQLITE')
 
             else:
                 print('Error deleting column. The column does not exist')
@@ -315,6 +315,68 @@ class BaseDMsql(object):
         except Exception as E:
             print(str(E))
             print('Error in query:', sqlQuery)
+            return
+
+    def readDBchunks(self, tablename, orderField, chunksize=50000,
+                        selectOptions=None, limit=None, filterOptions=None, verbose=False):
+        """
+        Read data from a table in the database using chunks. 
+        Can choose to read only some specific fields
+        Rather than returning an dataframe, it returns an iterator that builds 
+        dataframes of desired number of rows (chunksize)
+
+        Args:
+            tablename    :  Table to read from
+            orderField   :  name of field that will be used for sorting the
+                            results of the query (e.g, 'ID'). This is the column
+                            that will be used for iteration, so this variable is mandatory
+            chunksize    :  Length of chunks for reading the table. Default value: 50000
+            selectOptions:  string with fields that will be retrieved
+                            (e.g. 'REFERENCIA, Resumen')
+                            If None, all columns will be retrieved
+            limit:          The total maximum number of records to retrieve.
+            filterOptions:  string with filtering options for the SQL query
+                            (e.g., 'UNESCO_cd=23')
+            verbose      :  If True, information on the number of rows read so far will be
+                            displayed
+        """
+
+        if limit:
+            remaining = limit
+            next_chunk = min(remaining, chunksize)
+        else:
+            next_chunk = chunksize
+
+        cont = 0
+        
+        selectOptions = selectOptions + ', ' + orderField
+
+        df = self.readDBtable(tablename, limit=next_chunk, selectOptions=selectOptions,
+                filterOptions = filterOptions, orderOptions=orderField)
+
+        while (len(df)):
+            cont = cont+len(df)
+            if verbose:
+                print('[DBManager (readDBchunks)] Number of rows read so far:', cont)
+            if limit:
+                remaining = limit - cont
+                next_chunk = min(remaining, chunksize)
+            else:
+                next_chunk = chunksize
+            yield df.iloc[:,:-1]
+
+            #Next we need to start from last retrieved element
+            filtercondition = orderField + '>' + str(df.iloc[:,-1][len(df)-1])
+            if filterOptions:
+                filtercondition = filterOptions + ' AND ' + filtercondition
+            
+            if next_chunk>0:
+                df = self.readDBtable(tablename, limit=next_chunk, selectOptions=selectOptions,
+                        filterOptions = filtercondition, orderOptions=orderField)
+            else:
+                #If maximum number of records has been reached, set df to empty list to exit
+                df = []
+
 
     def getTableNames(self):
         """
