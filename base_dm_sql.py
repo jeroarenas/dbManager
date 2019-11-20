@@ -142,6 +142,10 @@ class BaseDMsql(object):
 
         return
 
+    def setConnCharset(self, charsetcode):
+    	self._conn.set_character_set(charsetcode)
+    	return
+
     def deleteDBtables(self, tables=None):
         """
         Delete tables from database
