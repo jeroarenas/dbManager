@@ -372,7 +372,7 @@ class BaseDMsql(object):
             #Next we need to start from last retrieved element
             filtercondition = orderField + '>' + str(df.iloc[:,-1][len(df)-1])
             if filterOptions:
-                filtercondition = filterOptions + ' AND ' + filtercondition
+                filtercondition = filtercondition + ' AND ' + filterOptions
             
             if next_chunk>0:
                 df = self.readDBtable(tablename, limit=next_chunk, selectOptions=selectOptions,
