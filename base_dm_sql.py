@@ -21,6 +21,9 @@ The base clase provided in this file implements the following methods:
 * dropTableColumn : Removes column from table (only MySQL)
 * readDBtable     : Reads rows from table and returns a pandas dataframe
                     with the retrieved data
+* readDBchunks    : RProvides an iterator to read chunks of rows in table.
+                    Each iteration returns a chunk of predefined max number of rows
+                    to avoid stalling the mysql server
 * getTableNames   : Gets the names of the tables in the database
 * getColumnNames  : Gets the names of the columns in a particular table
 * getTableInfo    : Gets the number of rows and the names of columns in table
@@ -44,7 +47,7 @@ import copy
 from progress.bar import Bar
 
 def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
+    """Yields successive n-sized chunks from list l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
@@ -62,13 +65,13 @@ class BaseDMsql(object):
         Args:
             db_name      :Name of the DB
             db_connector :Connector. Available options are mysql or sqlite
-            path2db :Path to the project folder (sqlite only)
+            path2db      :Path to the project folder (sqlite only)
             db_server    :Server (mysql only)
             db_user      :User (mysql only)
             db_password  :Password (mysql only)
             db_port      :port(mysql via TCP only) Necessary if not 3306
-            unix_socket  :socket for local connectivity. If avaiable, connection
-                          is faster than through TCP. 
+            unix_socket  :socket for local connectivity. If available, connection
+                          is slightly faster than through TCP. 
             charset      :Codificación a utilizar por defecto en la conexión
         """
 
@@ -92,22 +95,22 @@ class BaseDMsql(object):
         # Try connection
         try:
             if self.connector == 'mysql':
-                if self.port:
-                    self._conn = MySQLdb.connect(host=self.server,
-                                    user=self.user, passwd=self.password,
-                                    db=self.dbname, port=self.port,
-                                    charset=charset)
-                elif self.unix_socket:
+                if self.unix_socket:
                     self._conn = MySQLdb.connect(host=self.server,
                                     user=self.user, passwd=self.password,
                                     db=self.dbname,
                                     unix_socket=unix_socket, charset=charset)
+                elif self.port:
+                    self._conn = MySQLdb.connect(host=self.server,
+                                    user=self.user, passwd=self.password,
+                                    db=self.dbname, port=self.port,
+                                    charset=charset)
                 else:
                     self._conn = MySQLdb.connect(host=self.server,
                                     user=self.user, passwd=self.password,
                                     db=self.dbname, charset=charset)
                 self._c = self._conn.cursor()
-                print("MySQL database connection successful")
+                print('MySQL database connection successful. Default database:', self.dbname)
                 self.dbON = True
                 #self._conn.set_character_set('utf8')
             elif self.connector == 'sqlite3':
@@ -142,9 +145,10 @@ class BaseDMsql(object):
 
         return
 
-    def setConnCharset(self, charsetcode):
-    	self._conn.set_character_set(charsetcode)
-    	return
+    """def setConnCharset(self, charsetcode):
+        self._conn.set_character_set(charsetcode)
+        return
+    """
 
     def deleteDBtables(self, tables=None):
         """
@@ -153,8 +157,7 @@ class BaseDMsql(object):
         Args:
             tables: If string, name of the table to reset.
                     If list, list of tables to reset
-                    If None (default), all tables are deleted, and all tables
-                    (inlcuding those that might not exist previously)
+                    If None (default), all tables are deleted
         """
 
         # If tables is None, all tables are deleted and re-generated
@@ -185,8 +188,6 @@ class BaseDMsql(object):
             columnname : Name of new column
             columntype : Type of new column.
 
-        Note that, for mysql, if type is TXT or VARCHAR, the character set if
-        forzed to be utf8mb4.
         """
 
         # Check if the table exists
@@ -198,7 +199,7 @@ class BaseDMsql(object):
                 #Allow columnames with spaces
                 columnname = '`'+columnname+'`'
 
-                # Fit characters to the allowed format if necessary
+                """# Fit characters to the allowed format if necessary
                 fmt = ''
                 if (self.connector == 'mysql' and
                     ('TEXT' in columntype or 'VARCHAR' in columntype) and
@@ -208,8 +209,11 @@ class BaseDMsql(object):
                     # We enforze utf8mb4 for mysql
                     fmt = ' CHARACTER SET utf8mb4'
 
+
                 sqlcmd = ('ALTER TABLE ' + tablename + ' ADD COLUMN ' +
-                          columnname + ' ' + columntype + fmt)
+                          columnname + ' ' + columntype + fmt)"""
+                sqlcmd = ('ALTER TABLE ' + tablename + ' ADD COLUMN ' +
+                          columnname + ' ' + columntype)          
                 self._c.execute(sqlcmd)
 
                 # Commit changes
@@ -326,7 +330,7 @@ class BaseDMsql(object):
         """
         Read data from a table in the database using chunks. 
         Can choose to read only some specific fields
-        Rather than returning an dataframe, it returns an iterator that builds 
+        Rather than returning a dataframe, it returns an iterator that builds 
         dataframes of desired number of rows (chunksize)
 
         Args:
@@ -786,4 +790,14 @@ class BaseDMsql(object):
 
             print('Database dump only supported for MySQL databases')
 
+        return
+
+    def execute(self, sqlcmd):
+        """
+        Execute SQL command received as parameter
+
+        Args:
+            :
+        """
+        self._c.execute(sqlcmd)
         return
