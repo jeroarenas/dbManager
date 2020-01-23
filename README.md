@@ -31,6 +31,7 @@ The base clase (BaseDMsql) provided in this file implements the following method
                          If the record does not exist, new records will be created
    * `exportTable`     : Export a table from database either as pickle or excel file
    * `DBdump`          : Creates dump of full database, or dump of selected tables
+   * `execute`         : Execute SQL command received as parameter
    
 Table creation functions have not been incorporated in the class, since in our experience this task is different for each project. This repository can therefore be incorporated as a submodule of another project, and then create a new database_manager for the project that extends class BaseDMsql and adds methods for table creation and data import
 
