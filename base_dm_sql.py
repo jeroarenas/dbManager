@@ -35,6 +35,7 @@ The base clase provided in this file implements the following methods:
                     If the record does not exist, new records will be created
 * exportTable     : Export a table from database either as pickle or excel file
 * DBdump          : Creates dump of full database, or dump of selected tables
+* execute         : Execute SQL command received as parameter
 
 """
 
