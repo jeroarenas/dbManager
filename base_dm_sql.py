@@ -164,8 +164,10 @@ class BaseDMsql(object):
         # If tables is None, all tables are deleted and re-generated
         if tables is None:
             # Delete all existing tables
+            self._c.execute('SET FOREIGN_KEY_CHECKS = 0')
             for table in self.getTableNames():
                 self._c.execute("DROP TABLE " + table)
+            self._c.execute('SET FOREIGN_KEY_CHECKS = 1')
 
         else:
             # It tables is not a list, make the appropriate list
